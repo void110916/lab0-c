@@ -17,7 +17,9 @@
  */
 struct list_head *q_new()
 {
-    return NULL;
+    struct list_head *q_head = calloc(1, sizeof(struct list_head));
+    INIT_LIST_HEAD(q_head);
+    return q_head;
 }
 
 /* Free all storage used by queue */
@@ -32,6 +34,21 @@ void q_free(struct list_head *l) {}
  */
 bool q_insert_head(struct list_head *head, char *s)
 {
+    if (head == NULL)
+        return false;
+    element_t *e = malloc(sizeof(element_t));
+    if (!e)
+        return false;
+    INIT_LIST_HEAD(e);
+    list_add(&(e->list), head);
+    int len = strlen(s);
+    e->value = malloc(sizeof(char) * ++len);
+    if (!e->value) {
+        free(e);
+        return false;
+    }
+    strncpy(e->value, s, len);
+
     return true;
 }
 
@@ -44,6 +61,14 @@ bool q_insert_head(struct list_head *head, char *s)
  */
 bool q_insert_tail(struct list_head *head, char *s)
 {
+    if (head == NULL)
+        return false;
+    element_t *e = malloc(sizeof(element_t));
+    INIT_LIST_HEAD(e);
+    list_add_tail(&(e->list), head);
+    int len = strlen(s);
+    e->value = malloc(sizeof(char) * ++len);
+    strncpy(e->value, s, len);
     return true;
 }
 
@@ -63,7 +88,14 @@ bool q_insert_tail(struct list_head *head, char *s)
  */
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    element_t *e = NULL;
+    if (!list_empty(head)) {
+        e = container_of(head->next, element_t, list);
+        list_del(&e->list);
+        if (sp)
+            strncpy(sp, e->value, bufsize - 1);
+    }
+    return e;
 }
 
 /*
@@ -72,11 +104,18 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
  */
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
-    return NULL;
+    element_t *e = NULL;
+    if (!list_empty(head)) {
+        e = container_of(head->prev, element_t, list);
+        list_del(head);
+        if (sp)
+            strncpy(sp, e->value, bufsize - 1);
+    }
+    return e;
 }
 
 /*
- * WARN: This is for external usage, don't modify it
+ * WARN: This is for external usage, don't modify i t
  * Attempt to release element.
  */
 void q_release_element(element_t *e)
