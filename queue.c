@@ -140,7 +140,13 @@ void q_release_element(element_t *e)
  */
 int q_size(struct list_head *head)
 {
-    return -1;
+    int num = 0;
+    struct list_head *node = head;
+    while (node->next != head) {
+        node = node->next;
+        num++;
+    }
+    return num;
 }
 
 /*
