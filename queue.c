@@ -18,6 +18,8 @@
 struct list_head *q_new()
 {
     struct list_head *q_head = malloc(sizeof(struct list_head));
+    if (!q_head)
+        return NULL;
     INIT_LIST_HEAD(q_head);
     return q_head;
 }
@@ -45,13 +47,14 @@ void q_free(struct list_head *l)
  */
 bool q_insert_head(struct list_head *head, char *s)
 {
-    if (head == NULL)
+    if (!head)
         return false;
     element_t *e = malloc(sizeof(element_t));
-    if (!e)
+    if (!e) {
         return false;
+    }
     INIT_LIST_HEAD(&e->list);
-    list_add(&(e->list), head);
+    list_add(&e->list, head);
     e->value = strdup(s);
     if (!e->value) {
         free(e);
@@ -69,11 +72,13 @@ bool q_insert_head(struct list_head *head, char *s)
  */
 bool q_insert_tail(struct list_head *head, char *s)
 {
-    if (head == NULL)
+    if (!head)
         return false;
     element_t *e = malloc(sizeof(element_t));
+    if (!e)
+        return false;
     INIT_LIST_HEAD(&e->list);
-    list_add_tail(&(e->list), head);
+    list_add_tail(&e->list, head);
     e->value = strdup(s);
     if (!e->value) {
         free(e);
@@ -99,11 +104,17 @@ bool q_insert_tail(struct list_head *head, char *s)
 element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 {
     element_t *e = NULL;
+    if (!head) {
+        return NULL;
+    }
+
     if (!list_empty(head)) {
         e = container_of(head->next, element_t, list);
         list_del(&e->list);
-        if (sp)
-            strncpy(sp, e->value, bufsize);
+        if (sp) {
+            strncpy(sp, e->value, bufsize - 1);
+            sp[bufsize - 1] = '\0';
+        }
     }
     return e;
 }
@@ -115,11 +126,16 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
 element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
 {
     element_t *e = NULL;
+    if (!head) {
+        return NULL;
+    }
     if (!list_empty(head)) {
         e = container_of(head->prev, element_t, list);
         list_del(head);
-        if (sp)
-            strncpy(sp, e->value, bufsize);
+        if (sp) {
+            strncpy(sp, e->value, bufsize - 1);
+            sp[bufsize - 1] = '\0';
+        }
     }
     return e;
 }
@@ -140,6 +156,8 @@ void q_release_element(element_t *e)
  */
 int q_size(struct list_head *head)
 {
+    if (!head)
+        return 0;
     int num = 0;
     struct list_head *node = head;
     while (node->next != head) {
@@ -208,4 +226,31 @@ void q_reverse(struct list_head *head)
  * No effect if q is NULL or empty. In addition, if q has only one
  * element, do nothing.
  */
-void q_sort(struct list_head *head) {}
+void q_sort(struct list_head *head)
+{
+    if (!head)
+        return;
+    int count = 0;
+    // insertion sort
+    struct list_head *i, *j, *isafe, *jsafe;
+    for (i = (head->next)->next, isafe = i->next; i != head;
+         i = isafe, isafe = i->next) {
+        for (j = head->next, jsafe = j->next; j != i;
+             j = jsafe, jsafe = j->next) {
+            char *s1, *s2;
+            s1 = container_of(i, element_t, list)->value;
+            s2 = container_of(j, element_t, list)->value;
+            int cmp = strcmp(s1, s2);
+            // printf("s1: %s,s2: %s,%d\n", s1, s2, cmp);
+            // if (count > 30) {
+            //     return;
+            // }
+            count++;
+            if (cmp < 0) {
+                list_del_init(i);
+                list_add(i, j->prev);
+                break;
+            }
+        }
+    }
+}
