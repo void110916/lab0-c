@@ -53,13 +53,12 @@ bool q_insert_head(struct list_head *head, char *s)
     if (!e) {
         return false;
     }
-    INIT_LIST_HEAD(&e->list);
-    list_add(&e->list, head);
     e->value = strdup(s);
     if (!e->value) {
         free(e);
         return false;
     }
+    list_add(&e->list, head);
     return true;
 }
 
@@ -77,13 +76,13 @@ bool q_insert_tail(struct list_head *head, char *s)
     element_t *e = malloc(sizeof(element_t));
     if (!e)
         return false;
-    INIT_LIST_HEAD(&e->list);
-    list_add_tail(&e->list, head);
     e->value = strdup(s);
     if (!e->value) {
         free(e);
         return false;
     }
+    list_add_tail(&e->list, head);
+
     return true;
 }
 
@@ -202,6 +201,12 @@ bool q_delete_dup(struct list_head *head)
 void q_swap(struct list_head *head)
 {
     // https://leetcode.com/problems/swap-nodes-in-pairs/
+    struct list_head *next, *nnext;
+    for (next = head->next, nnext = next->next;
+         next->next != head || nnext->next != head;
+         next = next->next, nnext = next->next) {
+        list_move_tail(nnext, next);
+    }
 }
 
 /*
@@ -238,13 +243,9 @@ void q_sort(struct list_head *head)
         for (j = head->next, jsafe = j->next; j != i;
              j = jsafe, jsafe = j->next) {
             char *s1, *s2;
-            s1 = container_of(i, element_t, list)->value;
-            s2 = container_of(j, element_t, list)->value;
+            s1 = list_entry(i, element_t, list)->value;
+            s2 = list_entry(j, element_t, list)->value;
             int cmp = strcmp(s1, s2);
-            // printf("s1: %s,s2: %s,%d\n", s1, s2, cmp);
-            // if (count > 30) {
-            //     return;
-            // }
             count++;
             if (cmp < 0) {
                 list_del_init(i);
